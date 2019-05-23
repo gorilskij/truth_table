@@ -9,7 +9,16 @@ use crate::internals::check_validity::Checking::{Identifier, SpaceAfterIdentifie
 
 pub enum Status { Ok, Unexpected(usize, char), ExpectedAtEnd(String), Msg(String) }
 
-// TODO: write decrement_paren_depth macro
+macro_rules! decrement_or_unexpected {
+    ($paren_depth: ident, ($i: ident, $ch: ident)) => {
+        if $paren_depth == 0 {
+            return Status::Unexpected($i, $ch)
+        } else {
+            $paren_depth -= 1
+        }
+    }
+}
+
 pub fn check_validity(expr: &str) -> Status {
     if expr.is_empty() || expr.chars().all(|x| x == ' ') {
         return Status::Msg("empty expression".to_string())
@@ -37,8 +46,7 @@ pub fn check_validity(expr: &str) -> Status {
                     'a'..='z' | 'A'..='Z' => (),
                     '&' | '|' | '<' | '=' => last = Checking::Operator(ch),
                     ')' => {
-                        if paren_depth == 0 { return Status::Unexpected(i, ch) }
-                        paren_depth -= 1;
+                        decrement_or_unexpected!(paren_depth, (i, ch));
                         last = Checking::ParenClose
                     },
                     ' ' => last = SpaceAfterIdentifier,
@@ -72,8 +80,7 @@ pub fn check_validity(expr: &str) -> Status {
                 match ch {
                     '&' | '|' | '<' | '=' => last = Operator(ch),
                     ')' => {
-                        if paren_depth == 0 { return Status::Unexpected(i, ch) }
-                        paren_depth -= 1;
+                        decrement_or_unexpected!(paren_depth, (i, ch));
                         last = ParenClose
                     },
                     ' ' => (),
