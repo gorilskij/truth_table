@@ -6,7 +6,9 @@ impl VarValues {
     pub fn new(names: &Vec<String>) -> Self {
         let mut list = LinkedList::new();
         for name in names {
-            list.push_back((name.clone(), true))
+            if !list.iter().any(|(n, _)| n == name) {
+                list.push_back((name.clone(), true))
+            }
         }
         VarValues(list)
     }
