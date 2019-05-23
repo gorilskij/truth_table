@@ -138,7 +138,17 @@ fn downgrade_not(parsing: &mut Vec<Parsing>) {
             .position(|x| x.string_eq("!"));
 
         if let Some(index) = maybe_index {
-            downgrade(index..index+2, parsing)
+            let mut obliterated = false;
+            if let Parsing::String(s) = &parsing[index + 1] {
+                if s == "!" {
+                    // obliterate [!, !]
+                    parsing.remove(index);
+                    parsing.remove(index);
+                    obliterated = true
+                }
+            }
+
+            if !obliterated { downgrade(index..index+2, parsing) }
         } else { break }
     }
 }

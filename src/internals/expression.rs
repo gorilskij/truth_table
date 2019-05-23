@@ -58,13 +58,9 @@ impl Expression for Op {
     }
 }
 
-fn and_func(x: bool, y: bool) -> bool { x && y }
-fn or_func(x: bool, y: bool) -> bool { x || y }
-fn not_func(_: bool, x: bool) -> bool { !x }
-fn implies_func(x: bool, y: bool) -> bool { !x || y }
-fn iff_func(x: bool, y: bool) -> bool { x == y }
-static AND: &fn(bool, bool) -> bool = &(and_func as fn(bool, bool) -> bool);
-static OR: &fn(bool, bool) -> bool = &(or_func as fn(bool, bool) -> bool);
-static NOT: &fn(bool, bool) -> bool = &(not_func as fn(bool, bool) -> bool);
-static IMPLIES: &fn(bool, bool) -> bool = &(implies_func as fn(bool, bool) -> bool);
-static IFF: &fn(bool, bool) -> bool = &(iff_func as fn(bool, bool) -> bool);
+// note: infix operators like '&' take 2 arguments, not only takes the right argument
+static AND: &fn(bool, bool) -> bool = &((|x, y| x && y) as fn(bool, bool) -> bool);
+static OR: &fn(bool, bool) -> bool = &((|x, y| x || y) as fn(bool, bool) -> bool);
+static NOT: &fn(bool, bool) -> bool = &((|_, x| !x) as fn(bool, bool) -> bool);
+static IMPLIES: &fn(bool, bool) -> bool = &((|x, y| !x || y) as fn(bool, bool) -> bool);
+static IFF: &fn(bool, bool) -> bool = &((|x, y| x == y) as fn(bool, bool) -> bool);
