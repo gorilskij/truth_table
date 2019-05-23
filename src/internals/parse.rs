@@ -4,8 +4,6 @@ use std::ops::RangeBounds;
 use std::collections::Bound;
 use crate::internals::var_values::VarValues;
 
-// TODO: implement check function
-
 fn split(from: &str) -> Vec<String> {
     let mut parts = vec![];
     let mut part = String::new();

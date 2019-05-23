@@ -32,6 +32,7 @@ impl VarValues {
             entry.1 = !value;
             if value { return true }
         }
+
         false
     }
 }

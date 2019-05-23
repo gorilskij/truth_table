@@ -1,39 +1,18 @@
+use std::process::exit;
+
 enum Checking {
     Identifier, SpaceAfterIdentifier, Operator(char), ParenOpen, ParenClose, None
 }
 
-// use Checking::*; // <- CLion doesn't recognize
+// use Checking::*; // (works but unrecognized by CLion)
 use crate::internals::check_validity::Checking::{Identifier, SpaceAfterIdentifier, Operator, ParenOpen, ParenClose, None};
-use std::process::exit;
 
-// TODO: convert to Result (Ok() | Err())
-// TODO: implement 'expected' messages
-// TODO: implement index and arrow
-fn exit_unexpected(i: usize, ch: char, expr: &str) -> ! {
-    let init_msg = format!("unexpected character '{}' in \"", ch);
-    let init_spaces = init_msg.len() + i;
+pub enum Status { Ok, Unexpected(usize, char), ExpectedAtEnd(String), Msg(String) }
 
-    println!("{}{}\" at index {}", init_msg, expr, i);
-
-    for _ in 0..init_spaces { print!(" ") }
-    println!("^");
-
-    exit(0)
-}
-
-fn exit_with_message(msg: &str) -> ! {
-    println!("{}", msg);
-    exit(0)
-}
-
-fn decrement_paren_depth(index: usize, depth: &mut usize, from: &str) {
-    if *depth == 0 { exit_unexpected(index, ')', from) }
-    *depth -= 1
-}
-
-pub fn check_validity(expr: &str) {
+// TODO: write decrement_paren_depth macro
+pub fn check_validity(expr: &str) -> Status {
     if expr.is_empty() || expr.chars().all(|x| x == ' ') {
-        exit_with_message("empty expression")
+        return Status::Msg("empty expression".to_string())
     }
 
     let mut last = Checking::None;
@@ -50,7 +29,7 @@ pub fn check_validity(expr: &str) {
                         last = ParenOpen
                     },
                     ' ' => (),
-                    _ => exit_unexpected(i, ch, expr)
+                    _ => return Status::Unexpected(i, ch)
                 }
             },
             Identifier => {
@@ -58,12 +37,12 @@ pub fn check_validity(expr: &str) {
                     'a'..='z' | 'A'..='Z' => (),
                     '&' | '|' | '<' | '=' => last = Checking::Operator(ch),
                     ')' => {
-                        if paren_depth == 0 { exit_unexpected(i, ch, expr) }
+                        if paren_depth == 0 { return Status::Unexpected(i, ch) }
                         paren_depth -= 1;
                         last = Checking::ParenClose
                     },
                     ' ' => last = SpaceAfterIdentifier,
-                    _ => exit_unexpected(i, ch, expr)
+                    _ => return Status::Unexpected(i, ch)
                 }
             },
             Operator(last_ch) => {
@@ -76,39 +55,41 @@ pub fn check_validity(expr: &str) {
                             last = ParenOpen
                         },
                         ' ' => (),
-                        _ => exit_unexpected(i, ch, expr)
+                        _ => return Status::Unexpected(i, ch)
                     },
                     '<' => match ch {
                         '=' => last = Operator(ch),
-                        _ => exit_unexpected(i, ch, expr)
+                        _ => return Status::Unexpected(i, ch)
                     },
                     '=' => match ch {
                         '>' => last = Operator(ch),
-                        _ => exit_unexpected(i, ch, expr)
+                        _ => return Status::Unexpected(i, ch)
                     },
-                    _ => exit_unexpected(i, ch, expr)
+                    _ => return Status::Unexpected(i, ch)
                 }
             },
             SpaceAfterIdentifier | ParenClose => {
                 match ch {
                     '&' | '|' | '<' | '=' => last = Operator(ch),
-                    ')' => decrement_paren_depth(i, &mut paren_depth, expr),
+                    ')' => {
+                        if paren_depth == 0 { return Status::Unexpected(i, ch) }
+                        paren_depth -= 1;
+                        last = ParenClose
+                    },
                     ' ' => (),
-                    _ => exit_unexpected(i, ch, expr)
+                    _ => return Status::Unexpected(i, ch)
                 }
             }
         }
     }
 
     if paren_depth != 0 {
-        exit_with_message("expected ')' at the end")
+        return Status::ExpectedAtEnd("')'".to_string())
     }
 
     match last {
         ParenOpen => panic!("this case (last ParenOpen) should have been caught earlier"),
-        Operator(_) => exit_with_message("expected identifier or expression at the end"),
-        _ => ()
+        Operator(_) => Status::ExpectedAtEnd("identifier or '!'".to_string()),
+        _ => Status::Ok
     }
-
-    // TODO: conclusive match to ensure that parens are matched and final value is valid (not &)
 }
