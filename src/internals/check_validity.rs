@@ -10,13 +10,13 @@ use crate::internals::check_validity::Checking::{Identifier, SpaceAfterIdentifie
 pub enum Status { Ok, Unexpected(usize, char), ExpectedAtEnd(String), Msg(String) }
 
 macro_rules! decrement_or_unexpected {
-    ($paren_depth: ident, ($i: ident, $ch: ident)) => {
+    ($paren_depth: ident, ($i: ident, $ch: ident)) => {{
         if $paren_depth == 0 {
             return Status::Unexpected($i, $ch)
         } else {
             $paren_depth -= 1
         }
-    }
+    }}
 }
 
 pub fn check_validity(expr: &str) -> Status {
@@ -31,7 +31,7 @@ pub fn check_validity(expr: &str) -> Status {
         match last {
             None | ParenOpen => {
                 match ch {
-                    'a'..='z' | 'A'..='Z' => last = Identifier,
+                    x if x.is_alphabetic() => last = Identifier,
                     '!' => last = Operator(ch),
                     '(' => {
                         paren_depth += 1;
@@ -43,7 +43,7 @@ pub fn check_validity(expr: &str) -> Status {
             },
             Identifier => {
                 match ch {
-                    'a'..='z' | 'A'..='Z' => (),
+                    x if x.is_alphabetic() => (),
                     '&' | '|' | '<' | '=' => last = Checking::Operator(ch),
                     ')' => {
                         decrement_or_unexpected!(paren_depth, (i, ch));
@@ -56,7 +56,7 @@ pub fn check_validity(expr: &str) -> Status {
             Operator(last_ch) => {
                 match last_ch {
                     '!' | '&' | '|' | '>' => match ch {
-                        'a'..='z' | 'A'..='Z' => last = Identifier,
+                        x if x.is_alphabetic() => last = Identifier,
                         '!' => last = Operator(ch),
                         '(' => {
                             paren_depth += 1;
@@ -95,8 +95,8 @@ pub fn check_validity(expr: &str) -> Status {
     }
 
     match last {
-        ParenOpen => panic!("this case (last ParenOpen) should have been caught earlier"),
-        Operator(_) => Status::ExpectedAtEnd("identifier or '!'".to_string()),
+        ParenOpen => unreachable!("this case (last ParenOpen) should have been caught earlier"),
+        Operator(_) => Status::ExpectedAtEnd("expression".to_string()),
         _ => Status::Ok
     }
 }

@@ -3,6 +3,7 @@ mod expression;
 mod check_validity;
 mod parse;
 mod display;
+mod simplify;
 
 use crate::internals::check_validity::Status; // long import only for CLion
 

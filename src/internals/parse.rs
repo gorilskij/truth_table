@@ -87,7 +87,7 @@ fn downgrade<R>(range: R, parsing: &mut Vec<Parsing>) where R: RangeBounds<usize
     let index = match range.start_bound() {
         Bound::Included(t) => *t,
         Bound::Unbounded => 0,
-        _ => panic!("") // start index shouldn't be Bound::Excluded
+        _ => unreachable!("start index shouldn't be Bound::Excluded")
     };
 
     let sub: Vec<Parsing> = parsing.drain(range).collect();
@@ -187,9 +187,11 @@ fn to_expression(parsing: &Parsing) -> ExBox {
                             "<=>" => Op::new_iff(left, right),
                             _ => panic!("unexpected op '{}'", s)
                         }
-                    } else { panic!("unexpected Parsing::SubList in the middle of a 3-long block") }
+                    } else {
+                        unreachable!("invalid Parsing::SubList in the middle of a 3-long block")
+                    }
                 },
-                n => panic!("unexpected length of block: {}", n)
+                n => unreachable!("invalid length of block: {}", n)
             }
         }
     }
