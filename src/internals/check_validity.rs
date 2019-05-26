@@ -1,5 +1,3 @@
-use std::process::exit;
-
 enum Checking {
     Identifier, SpaceAfterIdentifier, Operator(char), ParenOpen, ParenClose, None
 }

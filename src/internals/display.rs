@@ -14,10 +14,9 @@ pub fn display(original: &str, expression: ExBox, mut var_values: VarValues) {
     let mut contradiction = true;
 
     loop {
-        for (i, (space, value)) in name_lengths
+        for (space, value) in name_lengths
             .iter()
-            .zip(var_values.values())
-            .enumerate() {
+            .zip(var_values.values()) {
             if value { print!("T"); } else { print!("F"); }
             for _ in 0..*space { print!(" "); }
         }

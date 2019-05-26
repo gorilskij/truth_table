@@ -1,5 +1,4 @@
 use crate::internals::expression::{ExBox, Var, Expression, Op};
-use crate::internals::parse::Parsing::SubList;
 use std::ops::RangeBounds;
 use std::collections::Bound;
 use crate::internals::var_values::VarValues;
@@ -220,21 +219,21 @@ pub fn parse(from: &str) -> (ExBox, VarValues){
 }
 
 // for debug printing
-fn print_parsing(parsing: &Vec<Parsing>) {
-    print_parsing_(parsing);
-    println!()
-}
-
-fn print_parsing_(parsing: &Vec<Parsing>) {
-    print!("[");
-    for (i, sub) in parsing.iter().enumerate() {
-        match sub {
-            Parsing::String(s) => print!("{}", s),
-            Parsing::SubList(l) => {
-                print_parsing_(l)
-            }
-        }
-        if i < parsing.len() - 1 { print!(", ") }
-    }
-    print!("]");
-}
+//fn print_parsing(parsing: &Vec<Parsing>) {
+//    print_parsing_(parsing);
+//    println!()
+//}
+//
+//fn print_parsing_(parsing: &Vec<Parsing>) {
+//    print!("[");
+//    for (i, sub) in parsing.iter().enumerate() {
+//        match sub {
+//            Parsing::String(s) => print!("{}", s),
+//            Parsing::SubList(l) => {
+//                print_parsing_(l)
+//            }
+//        }
+//        if i < parsing.len() - 1 { print!(", ") }
+//    }
+//    print!("]");
+//}
