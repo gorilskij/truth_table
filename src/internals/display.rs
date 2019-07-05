@@ -7,11 +7,13 @@ pub fn display(original: &str, expression: ExBox, mut var_values: VarValues) {
         name_lengths.push(name.len());
         print!("{} ", name)
     }
-    print!(" .  {}", original);
+    print!(" —  {}", original);
     println!();
 
     let mut tautology = true;
     let mut contradiction = true;
+
+    let mut even = true;
 
     loop {
         for (space, value) in name_lengths
@@ -21,7 +23,9 @@ pub fn display(original: &str, expression: ExBox, mut var_values: VarValues) {
             for _ in 0..*space { print!(" "); }
         }
 
-        print!(" .  ");
+        if even { print!(" -  ") } else { print!(" —  ") };
+        even = !even;
+
         if expression.evaluate(&var_values) {
             print!("T");
             contradiction = false;
