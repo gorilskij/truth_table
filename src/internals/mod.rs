@@ -37,5 +37,5 @@ pub fn display(expression: &str) {
     }
 
     let (expr, var_val) = parse::parse(expression);
-    display::display(expression, expr, var_val)
+    display::display(expression, &expr, var_val)
 }

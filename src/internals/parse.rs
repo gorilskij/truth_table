@@ -1,4 +1,4 @@
-use crate::internals::expression::{ExBox, Var, Expression, Op};
+use crate::internals::expression::Expression;
 use std::ops::RangeBounds;
 use std::collections::Bound;
 use crate::internals::var_values::VarValues;
@@ -168,22 +168,22 @@ fn downgrade_infix(op: &str, parsing: &mut Vec<Parsing>) {
     }
 }
 
-fn to_expression(parsing: &Parsing) -> ExBox {
+fn to_expression(parsing: &Parsing) -> Expression {
     match parsing {
-        Parsing::String(s) => Var::new(s).enbox(),
+        Parsing::String(s) => Expression::Var(s.clone()),
         Parsing::SubList(l) => {
             match l.len() {
                 1 => to_expression(&l[0]),
-                2 => Op::new_not(to_expression(&l[1])),
+                2 => Expression::new_not(to_expression(&l[1])),
                 3 => {
                     if let Parsing::String(s) = &l[1] {
                         let left = to_expression(&l[0]);
                         let right = to_expression(&l[2]);
                         match s.as_str() {
-                            "&" => Op::new_and(left, right),
-                            "|" => Op::new_or(left, right),
-                            "=>" => Op::new_implies(left, right),
-                            "<=>" => Op::new_iff(left, right),
+                            "&" => Expression::new_and(left, right),
+                            "|" => Expression::new_or(left, right),
+                            "=>" => Expression::new_implies(left, right),
+                            "<=>" => Expression::new_iff(left, right),
                             _ => panic!("unexpected op '{}'", s)
                         }
                     } else {
@@ -196,7 +196,7 @@ fn to_expression(parsing: &Parsing) -> ExBox {
     }
 }
 
-pub fn parse(from: &str) -> (ExBox, VarValues){
+pub fn parse(from: &str) -> (Expression, VarValues){
     let parts = split(from);
 
     let var_values = VarValues::new(&extract_names(&parts));

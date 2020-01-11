@@ -1,66 +1,57 @@
 use super::var_values::VarValues;
-use std::ops::Deref;
 
-pub trait Expression {
-    fn evaluate(&self, values: &VarValues) -> bool;
-    fn enbox(self) -> ExBox;
+pub enum Expression {
+    Var(String),
+    #[allow(dead_code)] // Op is only used through macro expansion
+    Op {
+        func: fn(bool, bool) -> bool,
+        left: Option<Box<Expression>>,
+        right: Box<Expression>,
+    },
+
 }
 
-pub struct ExBox(Box<dyn Expression>);
-impl Deref for ExBox {
-    type Target = dyn Expression;
-
-    fn deref(&self) -> &Self::Target {
-        self.0.as_ref()
+impl Expression {
+    pub fn evaluate(&self, values: &VarValues) -> bool {
+        use Expression::*;
+        match self {
+            Var(v) => values.get_value(v),
+            Op { func, left, right } => {
+                let left = match left.as_ref() {
+                    None => false,
+                    Some(ex) => ex.evaluate(values)
+                };
+                func(left, right.evaluate(values))
+            }
+        }
     }
 }
 
-// Implementations:
-pub struct Var(String);
-impl Var {
-    pub fn new<S: ToString>(name: S) -> Self {
-        Self(name.to_string())
-    }
-}
-impl Expression for Var {
-    fn evaluate(&self, values: &VarValues) -> bool {
-        values.get_value(&self.0)
-    }
 
-    fn enbox(self) -> ExBox {
-        ExBox(Box::new(self))
-    }
-}
+// logical methods
+fn and(l: bool, r: bool) -> bool { l && r }
+fn or(l: bool, r: bool) -> bool { l || r }
+fn not(_: bool, r: bool) -> bool { !r }
+fn implies(l: bool, r: bool) -> bool { !l || r }
+fn iff(l: bool, r: bool) -> bool { l == r }
 
-pub struct Op {
-    func: &'static fn(bool, bool) -> bool,
-    left: Option<ExBox>,
-    right: ExBox
-}
-impl Op {
-    pub fn new_and(left: ExBox, right: ExBox) -> ExBox { Op { func: AND, left: Some(left), right } .enbox() }
-    pub fn new_or(left: ExBox, right: ExBox) -> ExBox { Op { func: OR, left: Some(left), right } .enbox() }
-    pub fn new_not(right: ExBox) -> ExBox { Op { func: NOT, left: None, right } .enbox() }
-    pub fn new_implies(left: ExBox, right: ExBox) -> ExBox { Op { func: IMPLIES, left: Some(left), right } .enbox()}
-    pub fn new_iff(left: ExBox, right: ExBox) -> ExBox { Op { func: IFF, left: Some(left), right } .enbox()}
-}
-impl Expression for Op {
-    fn evaluate(&self, values: &VarValues) -> bool {
-        let left = match self.left.as_ref() {
-            None => false,
-            Some(ex) => ex.evaluate(values)
-        };
-        (self.func)(left, self.right.evaluate(values))
-    }
-
-    fn enbox(self) -> ExBox {
-        ExBox(Box::new(self))
-    }
+macro_rules! expr_logic_method {
+    ($name:ident, $func:expr) => {
+        pub fn $name(right: Self) -> Self {
+            Self::Op { func: $func, left: None, right: Box::new(right) }
+        }
+    };
+    ($name:ident, $func:expr, bin) => {
+        pub fn $name(left: Self, right: Self) -> Self {
+            Self::Op { func: $func, left: Some(Box::new(left)), right: Box::new(right) }
+        }
+    };
 }
 
-// note: infix operators like '&' take 2 arguments, not only takes the right argument
-static AND: &fn(bool, bool) -> bool = &((|x, y| x && y) as fn(bool, bool) -> bool);
-static OR: &fn(bool, bool) -> bool = &((|x, y| x || y) as fn(bool, bool) -> bool);
-static NOT: &fn(bool, bool) -> bool = &((|_, x| !x) as fn(bool, bool) -> bool);
-static IMPLIES: &fn(bool, bool) -> bool = &((|x, y| !x || y) as fn(bool, bool) -> bool);
-static IFF: &fn(bool, bool) -> bool = &((|x, y| x == y) as fn(bool, bool) -> bool);
+impl Expression {
+    expr_logic_method!(new_and, and, bin);
+    expr_logic_method!(new_or, or, bin);
+    expr_logic_method!(new_not, not);
+    expr_logic_method!(new_implies, implies, bin);
+    expr_logic_method!(new_iff, iff, bin);
+}

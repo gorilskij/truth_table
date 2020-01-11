@@ -1,7 +1,7 @@
-use super::expression::ExBox;
 use super::var_values::VarValues;
+use crate::internals::expression::Expression;
 
-pub fn display(original: &str, expression: ExBox, mut var_values: VarValues) {
+pub fn display(original: &str, expression: &Expression, mut var_values: VarValues) {
     let mut name_lengths = vec![];
     for name in var_values.names() {
         name_lengths.push(name.len());
