@@ -5,12 +5,13 @@ mod parse;
 mod display;
 mod simplify;
 
-use crate::internals::check_validity::Status; // long import only for CLion
+use check_validity::{check_validity, Status}; // long import only for CLion
 
 pub fn display(expression: &str) {
-    match check_validity::check_validity(expression) {
-        Status::Ok => (),
-        Status::Unexpected(i, ch) => {
+    use Status::*;
+    match check_validity(expression) {
+        Ok => (),
+        Unexpected(i, ch) => {
             let init_msg = format!("unexpected '{}' in \"", ch);
             let init_spaces = init_msg.len() + i;
 
@@ -20,7 +21,7 @@ pub fn display(expression: &str) {
             println!("^");
             return
         },
-        Status::ExpectedAtEnd(s) => {
+        ExpectedAtEnd(s) => {
             let init_msg = format!("expected {} at end of \"{}", s, expression);
 
             println!("{}\"", init_msg);
@@ -29,7 +30,7 @@ pub fn display(expression: &str) {
             println!("^");
             return
         },
-        Status::Msg(s) => {
+        Msg(s) => {
             println!("{}", s);
             return
         }

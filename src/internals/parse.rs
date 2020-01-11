@@ -58,7 +58,7 @@ fn split(from: &str) -> Vec<String> {
     parts
 }
 
-fn extract_names(parts: &Vec<String>) -> Vec<String> {
+fn extract_names(parts: &[String]) -> Vec<String> {
     let mut vars = vec![];
     for part in parts {
         if part.chars().next().unwrap().is_alphabetic() {
@@ -170,7 +170,7 @@ fn downgrade_infix(op: &str, parsing: &mut Vec<Parsing>) {
 
 fn to_expression(parsing: &Parsing) -> ExBox {
     match parsing {
-        Parsing::String(s) => Var::new(&s).enbox(),
+        Parsing::String(s) => Var::new(s).enbox(),
         Parsing::SubList(l) => {
             match l.len() {
                 1 => to_expression(&l[0]),
@@ -203,7 +203,7 @@ pub fn parse(from: &str) -> (ExBox, VarValues){
 
     let mut parsing: Vec<Parsing> = parts
         .into_iter()
-        .map(|s| Parsing::String(s) )
+        .map(Parsing::String)
         .collect();
 
     downgrade_braces(&mut parsing);

@@ -6,9 +6,9 @@ pub trait Expression {
     fn enbox(self) -> ExBox;
 }
 
-pub struct ExBox(Box<Expression>);
+pub struct ExBox(Box<dyn Expression>);
 impl Deref for ExBox {
-    type Target = Expression;
+    type Target = dyn Expression;
 
     fn deref(&self) -> &Self::Target {
         self.0.as_ref()
@@ -18,8 +18,8 @@ impl Deref for ExBox {
 // Implementations:
 pub struct Var(String);
 impl Var {
-    pub fn new(name: &String) -> Self {
-        Self(name.clone())
+    pub fn new<S: ToString>(name: S) -> Self {
+        Self(name.to_string())
     }
 }
 impl Expression for Var {

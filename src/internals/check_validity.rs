@@ -2,8 +2,7 @@ enum Checking {
     Identifier, SpaceAfterIdentifier, Operator(char), ParenOpen, ParenClose, None
 }
 
-// use Checking::*; // (works but unrecognized by CLion)
-use crate::internals::check_validity::Checking::{Identifier, SpaceAfterIdentifier, Operator, ParenOpen, ParenClose, None};
+use Checking::*;
 
 pub enum Status { Ok, Unexpected(usize, char), ExpectedAtEnd(String), Msg(String) }
 

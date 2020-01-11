@@ -1,5 +1,5 @@
-use crate::internals::expression::ExBox;
-use crate::internals::var_values::VarValues;
+use super::expression::ExBox;
+use super::var_values::VarValues;
 
 pub fn display(original: &str, expression: ExBox, mut var_values: VarValues) {
     let mut name_lengths = vec![];
