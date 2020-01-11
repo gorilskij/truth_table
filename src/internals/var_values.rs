@@ -1,40 +1,33 @@
-use std::collections::LinkedList;
+use indexmap::map::IndexMap;
 
-pub struct VarValues(LinkedList<(String, bool)>);
+pub struct VarValues(IndexMap<String, bool>);
 
 impl VarValues {
-    pub fn new(names: &Vec<String>) -> Self {
-        let mut list = LinkedList::new();
-        for name in names {
-            if !list.iter().any(|(n, _)| n == name) {
-                list.push_back((name.clone(), true))
-            }
+    pub fn new(names: &[String]) -> Self {
+        let mut map = IndexMap::new();
+        for name in names.iter().map(Clone::clone) {
+            map.entry(name).or_insert(true);
         }
-        VarValues(list)
+        VarValues(map)
     }
 
-    pub fn get_value(&self, name: &String) -> bool {
-        match self.0.iter().find(|x| *x.0 == *name) {
-            None => panic!("tried to get value of variable with inexistent name '{}'", name),
-            Some((_, value)) => *value
-        }
+    pub fn get_value<S: ToString>(&self, name: S) -> bool {
+        *self.0.get(&name.to_string()).unwrap_or_else(||
+            panic!("tried to get value of nonexistent variable '{}'", &name.to_string()))
     }
 
-    pub fn names(&self) -> Vec<&String> {
-        self.0.iter().map(|x| &x.0).collect()
+    pub fn names(&self) -> impl Iterator<Item=&String> {
+        self.0.keys()
     }
 
     pub fn values(&self) -> Vec<bool> {
-        self.0.iter().map(|x| x.1).collect()
+        self.0.values().copied().collect()
     }
 
     pub fn advance(&mut self) -> bool {
-        for entry in self.0.iter_mut().rev() {
-            let value = entry.1;
-            entry.1 = !value;
-            if value { return true }
-        }
-
-        false
+        self.0.values_mut().rev().any(|value| {
+            *value = !*value;
+            !*value
+        })
     }
 }
