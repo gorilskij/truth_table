@@ -1,57 +1,41 @@
 use super::var_values::VarValues;
 
-pub enum Expression {
-    Var(String),
-    #[allow(dead_code)] // Op is only used through macro expansion
-    Op {
-        func: fn(bool, bool) -> bool,
-        left: Option<Box<Expression>>,
-        right: Box<Expression>,
-    },
+pub enum BinOpType { And, Or, Implies, Iff }
 
+pub enum Expr {
+    Var(String),
+    BinOp(BinOpType, Box<Expr>, Box<Expr>),
+    Not(Box<Expr>),
 }
 
-impl Expression {
-    pub fn evaluate(&self, values: &VarValues) -> bool {
-        use Expression::*;
+// logical methods
+use fns::*;
+mod fns {
+    #![allow(dead_code)]
+    pub fn and(l: bool, r: bool) -> bool { l && r }
+    pub fn or(l: bool, r: bool) -> bool { l || r }
+    pub fn not(_: bool, r: bool) -> bool { !r }
+    pub fn implies(l: bool, r: bool) -> bool { !l || r }
+    pub fn iff(l: bool, r: bool) -> bool { l == r }
+}
+
+impl Expr {
+    pub fn evaluate(&self, var_values: &VarValues) -> bool {
+        use Expr::*;
+        use BinOpType::*;
         match self {
-            Var(v) => values.get_value(v),
-            Op { func, left, right } => {
-                let left = match left.as_ref() {
-                    None => false,
-                    Some(ex) => ex.evaluate(values)
+            Var(v) => var_values.get_value(v),
+            Not(e) => !e.evaluate(var_values),
+            BinOp(ty, left, right) => {
+                let func = match ty {
+                    And => and,
+                    Or => or,
+                    Implies => implies,
+                    Iff => iff,
                 };
-                func(left, right.evaluate(values))
+
+                func(left.evaluate(var_values), right.evaluate(var_values))
             }
         }
     }
-}
-
-
-// logical methods
-fn and(l: bool, r: bool) -> bool { l && r }
-fn or(l: bool, r: bool) -> bool { l || r }
-fn not(_: bool, r: bool) -> bool { !r }
-fn implies(l: bool, r: bool) -> bool { !l || r }
-fn iff(l: bool, r: bool) -> bool { l == r }
-
-macro_rules! expr_logic_method {
-    ($name:ident, $func:expr) => {
-        pub fn $name(right: Self) -> Self {
-            Self::Op { func: $func, left: None, right: Box::new(right) }
-        }
-    };
-    ($name:ident, $func:expr, bin) => {
-        pub fn $name(left: Self, right: Self) -> Self {
-            Self::Op { func: $func, left: Some(Box::new(left)), right: Box::new(right) }
-        }
-    };
-}
-
-impl Expression {
-    expr_logic_method!(new_and, and, bin);
-    expr_logic_method!(new_or, or, bin);
-    expr_logic_method!(new_not, not);
-    expr_logic_method!(new_implies, implies, bin);
-    expr_logic_method!(new_iff, iff, bin);
 }

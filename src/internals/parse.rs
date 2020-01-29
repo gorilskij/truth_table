@@ -1,4 +1,4 @@
-use crate::internals::expression::Expression;
+use crate::internals::expression::Expr;
 use std::ops::RangeBounds;
 use std::collections::Bound;
 use crate::internals::var_values::VarValues;
@@ -168,22 +168,24 @@ fn downgrade_infix(op: &str, parsing: &mut Vec<Parsing>) {
     }
 }
 
-fn to_expression(parsing: &Parsing) -> Expression {
+fn to_expression(parsing: &Parsing) -> Expr {
     match parsing {
-        Parsing::String(s) => Expression::Var(s.clone()),
+        Parsing::String(s) => Expr::Var(s.clone()),
         Parsing::SubList(l) => {
             match l.len() {
                 1 => to_expression(&l[0]),
-                2 => Expression::new_not(to_expression(&l[1])),
+                2 => Expr::Not(Box::new(to_expression(&l[1]))),
                 3 => {
                     if let Parsing::String(s) = &l[1] {
-                        let left = to_expression(&l[0]);
-                        let right = to_expression(&l[2]);
+                        let left = Box::new(to_expression(&l[0]));
+                        let right = Box::new(to_expression(&l[2]));
+
+                        use super::expression::BinOpType::*;
                         match s.as_str() {
-                            "&" => Expression::new_and(left, right),
-                            "|" => Expression::new_or(left, right),
-                            "=>" => Expression::new_implies(left, right),
-                            "<=>" => Expression::new_iff(left, right),
+                            "&" => Expr::BinOp(And, left, right),
+                            "|" => Expr::BinOp(Or, left, right),
+                            "=>" => Expr::BinOp(Implies, left, right),
+                            "<=>" => Expr::BinOp(Iff, left, right),
                             _ => panic!("unexpected op '{}'", s)
                         }
                     } else {
@@ -196,7 +198,7 @@ fn to_expression(parsing: &Parsing) -> Expression {
     }
 }
 
-pub fn parse(from: &str) -> (Expression, VarValues){
+pub fn parse(from: &str) -> (Expr, VarValues){
     let parts = split(from);
 
     let var_values = VarValues::new(&extract_names(&parts));

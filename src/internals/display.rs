@@ -1,7 +1,7 @@
 use super::var_values::VarValues;
-use crate::internals::expression::Expression;
+use crate::internals::expression::Expr;
 
-pub fn display(original: &str, expression: &Expression, mut var_values: VarValues) {
+pub fn display(original: &str, expression: &Expr, mut var_values: VarValues) {
     let mut name_lengths = vec![];
     for name in var_values.names() {
         name_lengths.push(name.len());
